@@ -4,23 +4,21 @@ from xml.etree import ElementTree as ET
 def evecentral(name):
      typeid={'Tritanium':34, 'Thing':35}
      payload = {'typeid':typeid[name]}
-     return req.get('http://api.eve-central.com/api/marketstat', params=payload)
+     rv = req.get('http://api.eve-central.com/api/marketstat', params=payload)
+     return rv.text
 
-def xmlparser(name, responseobject, ordertype):
-     buy = {'volume':0,'avg':0,'max':0,'min':0,'stddev':0,'mediam':0,'percentile':0}
-     xml = ET.fromstring(response.text)
+def xmlparser(name, response, ordertype):
+     dict_resp = {}
+     xml = ET.fromstring(response)
      for node in xml.iter(ordertype):
           for subnode in node.iter():
-               buy[subnode.tag] = subnode.text
-     return buy
+               dict_resp[subnode.tag] = subnode.text
+     return dict_resp
 
 if __name__=="__main__":
      
 
-     response = evecentral('Tritanium')
-     returno = xmlparser('Tritanium', response,'buy')
-     print returno
-
-               
-
-     
+     data = evecentral('Tritanium')
+     sell = xmlparser('Tritanium', data,'sell')
+     buy = xmlparser('Tritanium', data,'buy')
+     print('Sell {0} @ {1} for {2}'.format(sell['volume'], sell['min'], sell['max']))
