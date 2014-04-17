@@ -126,7 +126,8 @@ thingy = '''<?xml version='1.0' encoding='utf-8'?>
         </evec_api>'''
 
 def quicklook(arg):
-     '''formats data from the quicklook api call into dictionaries'''
+     '''formats data from the quicklook api call into dictionaries.  
+     Returns a tuple with item 0 = sell and item 1 = buy'''
      from functools import wraps
      dict_resp = {}
      @wraps(arg)
@@ -134,28 +135,27 @@ def quicklook(arg):
      def wrapper(*args):
           sell = {}
           buy = {}
-          print(arg)
+          order = {}
           xml = ET.fromstring(arg(*args))
           for node in xml.iter():
                if node.tag == 'sell_orders':
-                    for subnode in node.iter():
-                         if subnode.text != None:
-                              print subnode.tag, subnode.text
-                              #sell[subnode.tag] = subnode.text
-                         else:
-                              pass
-                              #sell[subnode.tag] = str(*args)
+                    for sellorders in node.iter():
+                         if sellorders.tag == 'order':
+                              for orders in sellorders.iter():
+                                   order[orders.tag] = orders.text
+                              sell[sellorders.attrib['id']] = order
+                              order = {}
+                              
                elif node.tag == 'buy_orders':
-                    for subnode in node.iter():
-                         if subnode.text != None:
-                              print subnode.tag, subnode.text
-                              #buy[subnode.tag] = subnode.text
-                         else:
-                              pass
-                              #buy[subnode.tag] = str(*args)                    
+                    for buyorders in node.iter():
+                         if buyorders.tag == 'order':
+                              for orders in buyorders.iter():
+                                   order[orders.tag] = orders.text
+                              buy[buyorders.attrib['id']] = order
+                              order = {}            
                     
                     
-          return {'sell':sell, 'buy':buy}
+          return sell, buy
      return wrapper
 
 def marketstat(arg):
@@ -183,7 +183,7 @@ def marketstat(arg):
                               buy[subnode.tag] = str(*args)                    
                     
                     
-          return {'sell':sell, 'buy':buy}
+          return sell, buy
      return wrapper
 
 def profit(buyvol, sellmin, buymax):
@@ -199,6 +199,7 @@ def querymarketstat(name):
      rv = req.get('http://api.eve-central.com/api/marketstat', params=payload)
      return rv.text
 
+@quicklook
 def queryquicklook(name, region):
      '''requests data from the quicklook endpoint'''
      typeid={'Tritanium':34, 'Pyerite':35}
@@ -208,15 +209,16 @@ def queryquicklook(name, region):
      return rv.text
 
 @quicklook
-def naughty(naughty):
-     return naughty
+def naughty(thingy):
+     return thingy
 
 if __name__=="__main__":
      
 
      #data = querymarketstat('Tritanium')
-     #data = queryquicklook('Pyerite', 'Heimatar')
-     print (naughty(thingy))
+     data = queryquicklook('Tritanium', 'Heimatar')
+     print type(data[0])
+     #print (naughty(thingy))
      #print profit(data['buy']['volume'], data['sell']['min'], data['buy']['max'])
      #sell = xmlparser('Tritanium', data,'sell')
      #buy = xmlparser('Tritanium', data,'buy')
