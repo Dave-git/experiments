@@ -208,16 +208,51 @@ def queryquicklook(name, region):
      rv = req.get('http://api.eve-central.com/api/quicklook', params=payload)
      return rv.text
 
-@quicklook
-def naughty(thingy):
-     return thingy
+
+def minimum(orders, threshold):
+     highsec_mini = 9999999999
+     lowsec_mini = 9999999999
+     highsec_orderid = 0
+     lowsec_orderid = 0
+     for x in orders.keys():
+          if float(orders[x]['price']) <= highsec_mini and orders[x]['vol_remain'] >= threshold and float(orders[x]['security']) >= 0.5:
+               hisec_mini = float(orders[x]['price'])
+               highsec_orderid = x
+          elif float(orders[x]['price']) <= lowsec_mini and orders[x]['vol_remain'] >= threshold:
+               lowsec_mini = float(orders[x]['price'])
+               lowsec_orderid = x               
+          
+               
+     return orders[highsec_orderid]
+
+def maximum(orders, threshold):
+     highsec_max = 0
+     lowsec_max = 0
+     highsec_orderid = 0
+     lowsec_orderid = 0
+     for x in orders.keys():
+          if float(orders[x]['price']) >= highsec_max and orders[x]['vol_remain'] >= threshold and float(orders[x]['security']) >= 0.5:
+               hisec_max = float(orders[x]['price'])
+               highsec_orderid = x
+          elif float(orders[x]['price']) >= lowsec_max and orders[x]['vol_remain'] >= threshold:
+               lowsec_max = float(orders[x]['price'])
+               lowsec_orderid = x               
+          
+               
+     return orders[highsec_orderid]
 
 if __name__=="__main__":
      
-
+     
      #data = querymarketstat('Tritanium')
      data = queryquicklook('Tritanium', 'Heimatar')
-     print type(data[0])
+     #print data[0]
+     print(minimum(data[0],1000), 'mini sell')
+     print(maximum(data[1],1000), 'maxi buy')
+     
+     #for x in data[0].keys():
+          #print data[0][x]['price']
+          
      #print (naughty(thingy))
      #print profit(data['buy']['volume'], data['sell']['min'], data['buy']['max'])
      #sell = xmlparser('Tritanium', data,'sell')
