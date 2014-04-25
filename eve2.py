@@ -87,37 +87,45 @@ def queryquicklook(name, region):
      return rv.text
 
 
-def minimum(orders, threshold):
-     highsec_mini = 9999999999999.00
-     lowsec_mini = 9999999999999.00
-     highsec_orderid = 0
-     lowsec_orderid = 0
+def lowerlimit(orders, minprice):
+     '''removes orders above a given price'''
      for x in orders.keys():
-          if float(orders[x]['price']) <= highsec_mini and orders[x]['vol_remain'] >= threshold and float(orders[x]['security']) >= 0.5:
-               hisec_mini = float(orders[x]['price'])
-               highsec_orderid = x
-          elif float(orders[x]['price']) <= lowsec_mini and orders[x]['vol_remain'] >= threshold:
-               lowsec_mini = float(orders[x]['price'])
-               lowsec_orderid = x               
-          
-               
-     return orders[highsec_orderid]
+          if float(orders[x]['price']) >= minprice:
+               del orders[x]
+     return orders
 
-def maximum(orders, threshold):
-     highsec_max = 0
-     lowsec_max = 0
-     highsec_orderid = 0
-     lowsec_orderid = 0
+
+def upperlimit(orders, maxprice):
+     '''removes orders below a given price'''
      for x in orders.keys():
-          if float(orders[x]['price']) >= highsec_max and orders[x]['vol_remain'] >= threshold and float(orders[x]['security']) >= 0.5:
-               hisec_max = float(orders[x]['price'])
-               highsec_orderid = x
-          elif float(orders[x]['price']) >= lowsec_max and orders[x]['vol_remain'] >= threshold:
-               lowsec_max = float(orders[x]['price'])
-               lowsec_orderid = x               
-          
+          if float(orders[x]['price']) <= maxprice:
+               del orders[x]
+     return orders
+
+def hiseconly(orders, security):
+     '''removes orders below a given security'''
+     for x in orders.keys():
+          if float(orders[x]['security']) < security:
+               del orders[x]
+     return orders
+
+def maxprice(orders, volremain):
+     '''returns the highest price for orders with a significant volume remaining'''
+     max_price = 0
+     for x in orders.keys():
+          if float(orders[x]['price']) > max_price:
+               max_price = orders[x]['price']
                
-     return orders[highsec_orderid]
+     return max_price
+
+def minprice(orders, volremain):
+     '''returns the highest price for orders with a significant volume remaining'''
+     min_price = 9999999999
+     for x in orders.keys():
+          if float(orders[x]['price']) < min_price:
+               min_price = orders[x]['price']
+               
+     return min_price
 
 if __name__=="__main__":
      
@@ -126,12 +134,30 @@ if __name__=="__main__":
      #tritanium_heimatar = queryquicklook('Tritanium', 'Heimatar')
      #tritanium_SinqLaison = queryquicklook('Tritanium', 'Sinq Laison')
      tritanium_TheForge = queryquicklook('Tritanium', 'The Forge')
-     print tritanium_TheForge[0]
+     #print tritanium_TheForge[0]
      #print(minimum(tritanium_heimatar[0],1000), 'mini sell')
      #print(maximum(tritanium_heimatar[1],1000), 'maxi buy')
      #print(minimum(tritanium_SinqLaison[0],1000), 'mini sell')
      #print(maximum(tritanium_SinqLaison[1],1000), 'maxi buy')
-     print(minimum(tritanium_TheForge[0],1000))
+     #sell_tritanium_TheForge_hisec = hiseconly(tritanium_TheForge[0],0.5)
+     buy_tritanium_TheForge_hisec = hiseconly(tritanium_TheForge[1],0.5)
+     
+     max_price = maxprice(buy_tritanium_TheForge_hisec,1000)
+     for x in regionid.keys():
+          xorders = queryquicklook('Tritanium', x)
+          sell_xorders_tritanium_highsec = hiseconly(xorders[0],0.5)
+          buy_xorders_tritanium_highsec = hiseconly(xorders[1],0.5)
+          #minsell = minprice(sell_xorders_tritanium_highsec, 1000)
+          minsell = 2.00
+          print(upperlimit(buy_xorders_tritanium_highsec, minsell))
+            
+          
+          #print(upperlimit(sell_xorders_tritanium_highsec, max_price))
+
+
+     #print(lowerlimit(sell_tritanium_TheForge_hisec,5.35))
+     #print(upperlimit(sell_tritanium_TheForge_hisec,3))
+     
      #print(maximum(tritanium_TheForge[1],1000), 'maxi buy')         
      #for x in data[0].keys():
           #print data[0][x]['price']
@@ -140,4 +166,3 @@ if __name__=="__main__":
      #print profit(data['buy']['volume'], data['sell']['min'], data['buy']['max'])
      #sell = xmlparser('Tritanium', data,'sell')
      #buy = xmlparser('Tritanium', data,'buy')
-     #print('Sell {0} @ {1} for {2}'.format(sell['volume'], sell['min'], sell['max']))
