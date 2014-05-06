@@ -178,14 +178,15 @@ class MyHTMLParser(HTMLParser):
           if tag == 'table':
                self.intable = False
                if self.righttable == True:
+                    self.value[self.region] = self.working
+                    self.working = []
                     self.righttable = False
           elif tag  == 'tr' and self.righttable == True:
                               
                self.working.append(self.diction)
                #print self.region
-               self.value[self.region] = self.working
+               
                self.diction = []
-               self.working = []
           
           elif tag == 'h2':
                self.h2 = False
