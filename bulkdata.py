@@ -2,6 +2,8 @@ import requests as req
 from xml.etree import ElementTree as ET
 from HTMLParser import HTMLParser
 import sqlite3 as SQL
+import io
+
 
 def getstations(url):
      rv = req.get(url)
@@ -304,19 +306,19 @@ if __name__=="__main__":
      tup = ()
      regionid = {'Derelik':10000001,'The Forge':10000002,'Vale of the Silent':10000003,'UUA-F4':10000004,'Detorid':10000005,'Wicked Creek':10000006,'Cache':10000007,'Scalding Pass':10000008,'Insmother':10000009,'Tribute':10000010,'Great Wildlands':10000011,'Curse':10000012,'Malpais':10000013,'Catch':10000014,'Venal':10000015,'Lonetrek':10000016,'J7HZ-F':10000017,'The Spire':10000018,'A821-A':10000019,'Tash-Murkon':10000020,'Outer Passage':10000021,'Stain':10000022,'Pure Blind':10000023,'Immensea':10000025,'Etherium Reach':10000027,'Molden Heath':10000028,'Geminate':10000029,'Heimatar':10000030,'Impass':10000031,'Sinq Laison':10000032,'The Citadel':10000033,'The Kalevala Expanse':10000034,'Deklein':10000035,'Devoid':10000036,'Everyshore':10000037,'The Bleak Lands':10000038,'Esoteria':10000039,'Oasa':10000040,'Syndicate':10000041,'Metropolis':10000042,'Domain':10000043,'Solitude':10000044,'Tenal':10000045,'Fade':10000046,'Providence':10000047,'Placid':10000048,'Khanid':10000049,'Querious':10000050,'Cloud Ring':10000051,'Kador':10000052,'Cobalt Edge':10000053,'Aridia':10000054,'Branch':10000055,'Feythabolis':10000056,'Outer Ring':10000057,'Fountain':10000058,'Paragon Soul':10000059,'Delve':10000060,'Tenerifis':10000061,'Omist':10000062,'Period Basis':10000063,'Essence':10000064,'Kor-Azor':10000065,'Perrigen Falls':10000066,'Genesis':10000067,'Verge Vendor':10000068,'Black Rise':10000069}
      
-     for corporation in npc_stations:
-          url = 'http://evemaps.dotlan.net/npc/{0}/stations'.format(corporation)
-          parser = MyHTMLParser()
-          parser.feed(getstations(url))
-          moo = parser.returnvalue()
-          for y in moo.keys():
-               for z in moo[y]:
-                    tup += (y,)
-                    for q in z:
-                         tup += (q,)
+     #for corporation in npc_stations:
+          #url = 'http://evemaps.dotlan.net/npc/{0}/stations'.format(corporation)
+          #parser = MyHTMLParser()
+          #parser.feed(getstations(url))
+          #moo = parser.returnvalue()
+          #for y in moo.keys():
+               #for z in moo[y]:
+                    #tup += (y,)
+                    #for q in z:
+                         #tup += (q,)
                     #print tup
-                    systems.append(tup)
-                    tup = ()     
+                    #systems.append(tup)
+                    #tup = ()     
      #rows = []
      conn = SQL.connect('eve_dump.db')
      conn.text_factory = str
@@ -325,15 +327,23 @@ if __name__=="__main__":
           #rows.append((x, regionid[x]))
      
      #print rows
-     cur.execute('''CREATE TABLE npcstation (Region, Constellation, System, Security, StationName, StationType)''')
-     conn.commit()
-     cur.executemany('INSERT INTO npcstation VALUES (?,?,?,?,?,?)',systems)
-     conn.commit() 
-     moop = cur.execute('SELECT * FROM npcstation')
+     #cur.execute('''CREATE TABLE typeid (TypeID, Type)''')
+     #conn.commit()
+     #cur.executemany('INSERT INTO npcstation VALUES (?,?,?,?,?,?)',systems)
+     #conn.commit() 
+     moop = cur.execute('SELECT * FROM typeid WHERE type ="Kernite"')
      print moop.fetchall()
-
-     
-     
+     row = ()
+     #with io.open('C:\\Users\\davidr\\Downloads\\typeid.txt', 'rb') as file:
+          #lines = file.readlines()
+          #for line in lines:
+               #moo= line.replace('\r\n', '', 1).split(',',2)
+               #moo =  line.split(",",2)
+               #print moo[1]
+               #row = (moo[0], moo[1])
+               #cur.execute('INSERT INTO typeid VALUES (?,?)', row)
+               #conn.commit()               
+               #row = ()
 
      #cur.execute('''CREATE TABLE regionid (RegionName, RegionId)''')
      #conn.commit() 
@@ -341,7 +351,6 @@ if __name__=="__main__":
      
           
 
-     #cur.executemany('INSERT INTO regionid VALUES (?,?)', rows)
-     #conn.commit()
+
      conn.close()
      
