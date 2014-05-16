@@ -79,52 +79,46 @@ def quicklook(arg):
 def parsepath(url):
      decodedurl = urllib.unquote(url)
      parsedurl = urlparse.urlparse(decodedurl)		
-     path = checkpath(parsedurl.path)
-     query = checkquery(urlparse.parse_qsl(parsedurl.query))
-     if query['status'] != 200:
+     #path = checkpath(parsedurl.path)
+     rawquery = urlparse.parse_qsl(parsedurl.query)
+     query = checkquery(rawquery)
+     print rawquery
+     if parsedurl.path == '/' and rawquery == []:
+	  return {'status':200}	  
+     elif query['status'] != 200:
 	  return query
-     elif path['status'] != 200:
-	  return path
      else:
-	  return {'status':200, 'typeid':path['typeid'], 'typename':path['typename'], 'minquantity':query['minquantity'], 'security':query['security']}
-
-def checkpath(strpath):
-     returnvalue = {}
-     rv_path = strpath[1:].split('/')
-     for i in range(len(rv_path)):
-	  if rv_path[i] == '':
-	       del rv_path[i]	    
-	  if len(rv_path) !=1:
-	       return {'status':400, 'ErrorText':'Incorrect number of "path" parameters: {0} supplied only 1 is expected'.format(len(rv_path))}	
-	  else:
-	       conn = SQL.connect('eve_dump.db')
-	       conn.text_factory = str
-	       cur = conn.cursor()
-	       sqlobj = cur.execute('SELECT typeid FROM typeid WHERE type=?',(rv_path[0],))
-	       rv = sqlobj.fetchone()
-	       if rv == None:
-		    conn.close()
-		    return {'status':404, 'ErrorText':'File not found: {0} not recognised'.format(rv_path[0])}
-	       else:
-		    conn.close()
-		    return {'status':200, 'typename':rv_path[0], 'typeid':rv[0]}
+	  return {'status':200, 'typeid':query['typeid'], 'typename':query['typename'], 'minquantity':query['minquantity'], 'security':query['security']} 
 	    
 def checkquery(rv_query):
      '''Function to check query parameters.  Either returns extracted values as a dictionary or returns error'''
      security = 0
      minquantity = 0
-     if len(rv_query) !=2:
-	  return {'status':400, 'ErrorText':'Incorrect number of specified query parameters "{0}" and 2 are expected'.format(len(rv_query))}
+     if len(rv_query) !=3:
+	  return {'status':400, 'ErrorText':'Incorrect number of specified query parameters "{0}" and 3 are expected'.format(len(rv_query))}
 	    
      for i in rv_query:
 	  if i[0] == 'sec':
 	       security = i[1]
 	  elif i[0] == 'minQ':
 	       minquantity = i[1]
+	  elif i[0] == 'typename':
+	       conn = SQL.connect('eve_dump.db')
+	       conn.text_factory = str
+	       cur = conn.cursor()
+	       sqlobj = cur.execute('SELECT typeid FROM typeid WHERE type=?',(i[1],))
+	       rv = sqlobj.fetchone()
+	       if rv == None:
+		    conn.close()
+		    return {'status':404, 'ErrorText':'File not found: {0} not recognised'.format(i[1])}
+	       else:
+		    conn.close()
+		    typename =i[0]
+		    typeid = rv[0]	       
 	  else:
 	       return {'status':400, 'ErrorText':'One or query parameters "{0}" is not understood'.format(i[0])}
 	    
-     return {'status':200,'security':security, 'minquantity':minquantity}
+     return {'status':200,'security':security, 'minquantity':minquantity, 'typename':typename, 'typeid':typeid}
 
 @quicklook
 def queryquicklook(typeid, regionid, minquantity):
@@ -140,9 +134,12 @@ def presenter(url):
      urlcheck = parsepath(url)
      if urlcheck['status'] != 200:
 	  return {'status':urlcheck['status'],'responsetext':'<html><b>Error {0}:</b> {1}</html>'.format(urlcheck['status'],urlcheck['ErrorText'])}
-     
-     if urlcheck['status'] == 200:
-	  for region in regionlist:
+     if urlcheck['status'] == 200 and len(urlcheck) <= 1:
+	  with open('index.html') as f:
+	       responsetext = f.read()
+	  return {'status':200,'responsetext':responsetext}
+     if urlcheck['status'] == 200 and len(urlcheck) >= 2:
+          for region in regionlist:
 	       more = queryquicklook(urlcheck['typeid'], regionlist[region], urlcheck['minquantity'])
 
 	       sellsec = hiseconly(more[0],float(urlcheck['security']))
@@ -159,7 +156,7 @@ def presenter(url):
 	  
 	  responsesell = '<tr><td>{0}</td><td>{1}</td><td>{2}</td></tr>'.format(sell['price'], sell['vol_remain'], sell['station_name'])
 	  responsebuy = '<tr><td>{0}</td><td>{1}</td><td>{2}</td></tr>'.format(buy['price'], buy['vol_remain'], buy['station_name'])
-	  return {'status':urlcheck['status'],'responsetext':'<html><table><tr><th>price</th><th>vol_remain</th><th>station_name</th></tr>{0}{1}</table></html>'.format(responsesell, responsebuy)}
+	  return {'status':urlcheck['status'],'responsetext':'<html><font face="verdana" size="2"><table><tr><th>price</th><th>vol_remain</th><th>station_name</th></tr>{0}{1}</table></font></html>'.format(responsesell, responsebuy)}
      
      
 class myHandler(BaseHTTPRequestHandler):
